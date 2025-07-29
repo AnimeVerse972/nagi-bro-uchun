@@ -57,8 +57,10 @@ class AdminStates(StatesGroup):
     waiting_for_delete_code = State()
     waiting_for_stat_code = State()
     waiting_for_broadcast_data = State()
+
 class AdminReplyStates(StatesGroup):
     waiting_for_reply_message = State()
+
 class EditCode(StatesGroup):
     WaitingForOldCode = State()
     WaitingForNewCode = State()
