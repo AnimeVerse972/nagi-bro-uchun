@@ -77,6 +77,9 @@ class PostStates(StatesGroup):
     waiting_for_title = State()
     waiting_for_link = State()
 
+class AdminStates(StatesGroup):
+    waiting_for_admin_id = State()
+    
 # === OBUNA TEKSHIRISH ===
 async def is_user_subscribed(user_id):
     for channel in CHANNELS:
