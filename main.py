@@ -109,6 +109,7 @@ async def start_handler(message: types.Message):
         kb.add("📊 Statistika", "📈 Kod statistikasi")
         kb.add("❌ Kodni o‘chirish", "📄 Kodlar ro‘yxati")
         kb.add("✏️ Kodni tahrirlash", "📤 Post qilish")
+        kb.add("📢 Habar yuborish")
         await message.answer("👮‍♂️ Admin panel:", reply_markup=kb)
     else:
         kb = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -452,25 +453,23 @@ async def get_post_link(message: types.Message, state: FSMContext):
         await state.finish()
 
 # === Kodlar ro‘yxati
-@dp.message_handler(lambda m: m.text == "📄 Kodlar ro‘yxati")
+@dp.message_handler(lambda m: m.text.strip() == "📄 Kodlar ro‘yxati")
 async def kodlar(message: types.Message):
     kodlar = await get_all_codes()
     if not kodlar:
-        await message.answer("📂 Kodlar yo‘q.")
+        await message.answer("⛔️ Hech qanday kod topilmadi.")
         return
 
-    text = "📄 Kodlar:\n"
+    # Kodlarni raqam bo‘yicha kichikdan kattasiga saralash
+    kodlar = sorted(kodlar, key=lambda x: int(x["code"]))
+
+    text = "📄 *Kodlar ro‘yxati:*\n\n"
     for row in kodlar:
         code = row["code"]
-        ch = row["channel"]
-        msg_id = row["message_id"]
-        count = row["post_count"]
-        title = row.get("title") or "Nomsiz"
-
-        text += f"🎬 *{title}*\n🔹 {code} → {ch} | {msg_id} ({count} post)\n\n"
+        title = row["title"]
+        text += f"`{code}` - *{title}*\n"
 
     await message.answer(text, parse_mode="Markdown")
-
 
 @dp.message_handler(lambda m: m.text == "🔍 Anime qidirish")
 async def search_start(message: types.Message):
