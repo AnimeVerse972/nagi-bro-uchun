@@ -28,8 +28,6 @@ from database import (
 
 # === YUKLAMALAR ===
 load_dotenv()
-keep_# === YUKLAMALAR ===
-load_dotenv()
 keep_alive()
 
 API_TOKEN = os.getenv("API_TOKEN")
