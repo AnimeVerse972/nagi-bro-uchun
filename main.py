@@ -248,9 +248,6 @@ async def show_help_page(callback: CallbackQuery):
         InlineKeyboardButton("⬅️ Ortga", callback_data="back_help")
     )
 
-    # Agar bu 'anime qo‘shish' bo‘lsa — state o‘zgartiramiz
-    if key == "help_add":
-        await AdminStates.waiting_for_kino_data.set()
 
     await callback.message.edit_text(text, parse_mode="Markdown", reply_markup=kb)
 
