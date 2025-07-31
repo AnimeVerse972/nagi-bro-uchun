@@ -116,9 +116,10 @@ async def start_handler(message: types.Message):
         kb = ReplyKeyboardMarkup(resize_keyboard=True)
         kb.add("➕ Anime qo‘shish")
         kb.add("📊 Statistika", "📈 Kod statistikasi")
-        kb.add("❌ Kodni o‘chirish", "➕ Admin qo‘shish", "📄 Kodlar ro‘yxati")
+        kb.add("❌ Kodni o‘chirish", "📄 Kodlar ro‘yxati")
         kb.add("✏️ Kodni tahrirlash", "📤 Post qilish")
-        kb.add("📢 Habar yuborish")
+        kb.add("📢 Habar yuborish", "📘 Qo‘llanma")
+        kb.add("➕ Admin qo‘shish")
         await message.answer("👮‍♂️ Admin panel:", reply_markup=kb)
     else:
         kb = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -176,6 +177,95 @@ async def send_admin_reply(message: types.Message, state: FSMContext):
         await message.answer(f"❌ Xatolik: {e}")
     finally:
         await state.finish()
+
+# ==== QO‘LLANMA MENYUSI ====
+@dp.message_handler(lambda m: m.text == "📘 Qo‘llanma")
+async def qollanma(message: types.Message):
+    kb = (
+        InlineKeyboardMarkup(row_width=1)
+        .add(InlineKeyboardButton("📥 1. Anime qo‘shish",  callback_data="help_add"))
+        .add(InlineKeyboardButton("📡 2. Kanal yaratish", callback_data="help_channel"))
+        .add(InlineKeyboardButton("🆔 3. Reklama ID olish", callback_data="help_id"))
+        .add(InlineKeyboardButton("🔁 4. Kod ishlashi", callback_data="help_code"))
+        .add(InlineKeyboardButton("❓ 5. Savol-javob", callback_data="help_faq"))
+    )
+    await message.answer("📘 Qanday yordam kerak?", reply_markup=kb)
+
+# ==== MATNLAR ====
+HELP_TEXTS = {
+    "help_add": (
+        "📥 *Anime qo‘shish*\n\n"
+        "`KOD @kanal REKLAMA_ID POST_SONI ANIME_NOMI`\n"
+        "Misol: `91 @MyKino 4 12 Naruto`\n"
+        "- Kod – foydalanuvchi yozadigan raqam\n"
+        "- @kanal – server kanal username\n"
+        "- REKLAMA_ID – post ID raqami (raqam)\n"
+        "- POST_SONI – nechta qism borligi\n"
+        "- ANIME_NOMI – ko‘rsatiladigan sarlavha\n\n"
+        "📩 Endi formatda xabar yuboring:"
+    ),
+    "help_channel": (
+        "📡 *Kanal yaratish*\n\n"
+        "1. 2 ta kanal yarating:\n"
+        "   • Server kanal (post saqlanadi)\n"
+        "   • Reklama kanal (bot ulashadi)\n"
+        "2. Har ikkasiga botni admin qiling\n"
+        "3. Kanalni public (@username) qiling"
+    ),
+    "help_id": (
+        "🆔 *Reklama ID olish*\n\n"
+        "1. Server kanalga post joylang\n"
+        "2. Post ustiga bosing → Share → Copy link\n"
+        "3. Link oxiridagi sonni oling\n"
+        "Misollar:\n"
+        "`t.me/MyKino/4` → ID = `4`"
+    ),
+    "help_code": (
+        "🔁 *Kod ishlashi*\n\n"
+        "1. Foydalanuvchi kod yozadi (masalan: `91`)\n"
+        "2. Obuna tekshiriladi → reklama post yuboriladi\n"
+        "3. Tugmalar orqali qismlarni ochadi"
+    ),
+    "help_faq": (
+        "❓ *Tez-tez so‘raladigan savollar*\n\n"
+        "• Kodni qanday ulashaman?\n"
+        "  Link: `https://t.me/<BOT_USERNAME>?start=91`\n\n"
+        "• Har safar yangi kanal kerakmi?\n"
+        "  – Yo‘q, bitta server kanal yetarli\n\n"
+        "• Kodni tahrirlash/o‘chirish mumkinmi?\n"
+        "  – Ha, admin menyuda ✏️ / ❌ tugmalari bor"
+    )
+}
+
+# ==== CALLBACK: HAR BIR YORDAM UCHUN ====
+@dp.callback_query_handler(lambda c: c.data.startswith("help_"))
+async def show_help_page(callback: CallbackQuery):
+    key = callback.data
+    text = HELP_TEXTS.get(key, "❌ Ma’lumot topilmadi")
+
+    # Ortga tugmasi
+    kb = InlineKeyboardMarkup().add(
+        InlineKeyboardButton("⬅️ Ortga", callback_data="back_help")
+    )
+
+    # Agar bu 'anime qo‘shish' bo‘lsa — state o‘zgartiramiz
+    if key == "help_add":
+        await AdminStates.waiting_for_kino_data.set()
+
+    await callback.message.edit_text(text, parse_mode="Markdown", reply_markup=kb)
+
+# ==== ORTGA TUGMASI ====
+@dp.callback_query_handler(lambda c: c.data == "back_help")
+async def back_to_qollanma(callback: CallbackQuery):
+    kb = (
+        InlineKeyboardMarkup(row_width=1)
+        .add(InlineKeyboardButton("📥 1. Anime qo‘shish",  callback_data="help_add"))
+        .add(InlineKeyboardButton("📡 2. Kanal yaratish", callback_data="help_channel"))
+        .add(InlineKeyboardButton("🆔 3. Reklama ID olish", callback_data="help_id"))
+        .add(InlineKeyboardButton("🔁 4. Kod ishlashi", callback_data="help_code"))
+        .add(InlineKeyboardButton("❓ 5. Savol-javob", callback_data="help_faq"))
+    )
+    await callback.message.edit_text("📘 Qanday yordam kerak?", reply_markup=kb)
 
 # === Admin qo'shish
 @dp.message_handler(lambda m: m.text == "➕ Admin qo‘shish", user_id=ADMINS)
