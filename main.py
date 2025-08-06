@@ -541,7 +541,6 @@ async def add_kino_handler(message: types.Message, state: FSMContext):
                         message_id=reklama_id,
                 reply_markup=download_btn
         ) 
-
             successful += 1
         except:
             failed += 1
