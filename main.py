@@ -574,18 +574,16 @@ async def kino_button(callback: types.CallbackQuery):
     await bot.copy_message(callback.from_user.id, channel, base_id + number - 1)
     await callback.answer()
 
-# === ➕ Anime qo‘shish
-@dp.message_handler(lambda m: m.text == "➕ Anime qo‘shish")
-async def add_start(message: types.Message):
-    if message.from_user.id in ADMINS:
-        await AdminStates.waiting_for_kino_data.set()
-        await message.answer("📝 Format: `KOD @kanal REKLAMA_ID POST_SONI ANIME_NOMI`\nMasalan: `91 @MyKino 4 12 naruto`", parse_mode="Markdown")
-
+# ... ANIME QO'SHISH
 @dp.message_handler(state=AdminStates.waiting_for_kino_data)
 async def add_kino_handler(message: types.Message, state: FSMContext):
     rows = message.text.strip().split("\n")
     successful = 0
     failed = 0
+
+    # MAIN_CHANNELS ni xavfsiz ro'yxatga aylantirib oling
+    main_channels = [c.strip() for c in os.getenv("MAIN_CHANNELS", "").split(",") if c.strip()]
+
     for row in rows:
         parts = row.strip().split()
         if len(parts) < 5:
@@ -602,27 +600,40 @@ async def add_kino_handler(message: types.Message, state: FSMContext):
         reklama_id = int(reklama_id)
         post_count = int(post_count)
 
-        await add_kino_code(code, server_channel, reklama_id + 1, post_count, title)
+        # Bazaga saqlaymiz (senda message_id +1 ishlatilgan, saqlash mantiqing shu bo'lsa qoldirdim)
+        try:
+            await add_kino_code(code, server_channel, reklama_id + 1, post_count, title)
+        except Exception as e:
+            print(f"[add_kino_code] code={code} -> {e}")
+            failed += 1
+            continue
 
         download_btn = InlineKeyboardMarkup().add(
             InlineKeyboardButton("📥 Yuklab olish", url=f"https://t.me/{BOT_USERNAME}?start={code}")
         )
 
-        try:
-            for ch in MAIN_CHANNELS:
-                await bot.copy_message(
+        # REKLAMA POSTNI KANALLARGA NUSXALASH
+        for ch in main_channels:
+            try:
+                # Eslatma: bu yerda reklama_id ning o'zini yuboramiz
+                sent = await bot.copy_message(
                     chat_id=ch,
                     from_chat_id=server_channel,
-                        message_id=reklama_id,
-                reply_markup=download_btn
-        ) 
-            successful += 1
-        except:
-            failed += 1
+                    message_id=reklama_id,
+                    reply_markup=download_btn
+                )
+                print(f"[copy_message] OK -> ch={ch} msg_id={getattr(sent, 'message_id', None)} code={code}")
+                successful += 1
+            except Exception as e:
+                print(f"[copy_message] FAIL -> ch={ch} code={code} err={e}")
+                failed += 1
 
-    await message.answer(f"✅ Yangi kodlar qo‘shildi:\n\n✅ Muvaffaqiyatli: {successful}\n❌ Xatolik: {failed}")
+    await message.answer(
+        f"✅ Yangi kodlar qo‘shildi:\n\n"
+        f"✅ Muvaffaqiyatli yuborildi: {successful}\n"
+        f"❌ Xatolik: {failed}"
+    )
     await state.finish()
-
 
 # === Kodlar ro‘yxati
 @dp.message_handler(lambda m: m.text.strip() == "📄 Kodlar ro‘yxati")
