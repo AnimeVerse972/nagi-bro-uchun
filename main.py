@@ -12,17 +12,22 @@ bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
 
 @dp.message_handler(commands=["codes"])
-async def list_codes(message: types.Message):
-    codes = await get_all_codes()
-    if not codes:
-        await message.answer("📭 Hozircha hech qanday kod yo‘q.")
+async def kodlar(message: types.Message):
+    kodlar = await get_all_codes()
+    if not kodlar:
+        await message.answer("⛔️ Hech qanday kod topilmadi.")
         return
 
-    text = "📋 Kodlar ro‘yxati:\n\n"
-    for c in codes:
-        text += f"{c['code']} — {c['title']}\n"
+    # Kodlarni raqam bo‘yicha kichikdan kattasiga saralash
+    kodlar = sorted(kodlar, key=lambda x: int(x["code"]))
 
-    await message.answer(text)
+    text = "📄 *Kodlar ro‘yxati:*\n\n"
+    for row in kodlar:
+        code = row["code"]
+        title = row["title"]
+        text += f"`{code}` - *{title}*\n"
+
+    await message.answer(text, parse_mode="Markdown")
 
 async def on_startup(_):
     await init_db()
