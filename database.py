@@ -35,21 +35,12 @@ async def close_db():
         print("❌ DB connection closed")
 
 
-# === Kodlar ro‘yxatini olish ===
+# === Kodlar ro‘yxatini olish (faqat code va title) ===
 async def get_all_codes():
     async with db_pool.acquire() as conn:
         rows = await conn.fetch("""
-            SELECT code, title, channel, message_id, post_count
+            SELECT code, title
             FROM kino_codes
             ORDER BY title
         """)
-        return [
-            {
-                "code": row["code"],
-                "title": row["title"],
-                "channel": row["channel"],
-                "message_id": row["message_id"],
-                "post_count": row["post_count"]
-            }
-            for row in rows
-        ]
+        return [{"code": row["code"], "title": row["title"]} for row in rows]
