@@ -35,12 +35,16 @@ async def close_db():
         print("❌ DB connection closed")
 
 
-# === Kodlar ro‘yxatini olish (faqat code va title) ===
-async def get_all_codes():
-    async with db_pool.acquire() as conn:
-        rows = await conn.fetch("""
-            SELECT code, title
-            FROM kino_codes
-            ORDER BY title
-        """)
-        return [{"code": row["code"], "title": row["title"]} for row in rows]
+@dp.message_handler(commands=["codes"])
+async def list_codes(message: types.Message):
+    codes = await get_all_codes()
+    if not codes:
+        await message.answer("📭 Hozircha hech qanday kod yo‘q.")
+        return
+
+    text = "📋 Kodlar ro‘yxati:\n\n"
+    for c in codes:
+        text += f"{c['code']} — {c['title']}\n"
+
+    await message.answer(text)
+
